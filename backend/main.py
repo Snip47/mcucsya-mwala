@@ -12,6 +12,35 @@ import app.models.message
 
 Base.metadata.create_all(bind=engine)
 
+def create_default_admin():
+    from app.db.database import SessionLocal
+    from app.models.user import User
+    from app.services.auth import hash_password
+    db = SessionLocal()
+    try:
+        existing = db.query(User).filter(User.national_id == "42671263").first()
+        if not existing:
+            admin = User(
+                full_name     = "Dancan Kivului",
+                national_id   = "42671263",
+                phone         = "0700000000",
+                ward          = "Masii Ward",
+                password_hash = hash_password("admin123"),
+                role          = "admin",
+                status        = "approved",
+            )
+            db.add(admin)
+            db.commit()
+            print("Default admin created successfully")
+        else:
+            print(f"Admin already exists: {existing.full_name}")
+    except Exception as e:
+        print(f"Admin setup: {e}")
+    finally:
+        db.close()
+
+create_default_admin()
+
 app = FastAPI(
     title="MCUCSYA Mwala Chapter API",
     version="1.0.0"
