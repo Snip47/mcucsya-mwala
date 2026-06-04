@@ -1,8 +1,7 @@
-node_modules/
-__pycache__/
-*.pyc
-.env
-*.db
-venv/
-dist/
-.DS_Store
+node_modules/ 
+frontend/node_modules/ 
+backend/venv/ 
+*.db 
+.env 
+__pycache__/ 
+dist/ 
