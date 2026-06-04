@@ -1,22 +1,26 @@
 {
   "name": "MCUCSYA Mwala Chapter",
-  "short_name": "MCUCSYA Mwala",
+  "short_name": "MCUCSYA",
   "description": "Mwala Constituency Youth Association Platform",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#166534",
+  "theme_color": "#1a3a1a",
   "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/logo.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/logo.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
