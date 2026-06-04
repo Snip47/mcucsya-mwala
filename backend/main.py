@@ -18,7 +18,9 @@ def create_default_admin():
     from app.services.auth import hash_password
     db = SessionLocal()
     try:
-        existing = db.query(User).filter(User.national_id == "42671263").first()
+        existing = db.query(User).filter(
+            User.national_id == "42671263"
+        ).first()
         if not existing:
             admin = User(
                 full_name     = "Dancan Kivului",
@@ -31,20 +33,17 @@ def create_default_admin():
             )
             db.add(admin)
             db.commit()
-            print("Default admin created successfully")
+            print("✓ Default admin created")
         else:
-            print(f"Admin already exists: {existing.full_name}")
+            print(f"✓ Admin exists: {existing.full_name}")
     except Exception as e:
-        print(f"Admin setup: {e}")
+        print(f"Admin setup error: {e}")
     finally:
         db.close()
 
 create_default_admin()
 
-app = FastAPI(
-    title="MCUCSYA Mwala Chapter API",
-    version="1.0.0"
-)
+app = FastAPI(title="MCUCSYA Mwala Chapter API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
