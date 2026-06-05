@@ -62,7 +62,7 @@ def add_admin(
         full_name     = full_name,
         national_id   = national_id,
         phone         = phone,
-        ward          = "Admin",
+        ward          = "Mwala/Makutano",
         password_hash = hash_password(password),
         role          = "admin",
         status        = "approved",
@@ -119,7 +119,6 @@ def add_member(
     existing = db.query(User).filter(User.national_id == national_id).first()
     if existing:
         raise HTTPException(status_code=400, detail="Account with this ID already exists")
-
     if role not in ["member", "leader", "mp", "admin"]:
         raise HTTPException(status_code=400, detail="Invalid role")
 
@@ -127,7 +126,7 @@ def add_member(
         full_name     = full_name,
         national_id   = national_id,
         phone         = phone,
-        ward          = ward or "Mwala Ward",
+        ward          = ward or "Mwala/Makutano",
         position      = position,
         password_hash = hash_password(password),
         role          = role,

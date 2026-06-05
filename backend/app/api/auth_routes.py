@@ -9,8 +9,8 @@ from app.services.cloudinary_upload import upload_image
 router = APIRouter()
 
 MWALA_WARDS = [
-    "Mwala Ward", "Mbiuni Ward", "Makutano Ward",
-    "Kibauni Ward", "Wamunyu Ward", "Masii Ward"
+    "Kibauni", "Wamunyu", "Mwala/Makutano",
+    "Muthetheni", "Mbiuni", "Masii"
 ]
 
 @router.post("/register/member")
@@ -192,8 +192,8 @@ async def update_photo(
     user = db.query(User).filter(User.id == int(payload["sub"])).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    contents          = await profile_photo.read()
-    photo_url         = upload_image(contents, folder="mcucsya/profiles")
+    contents           = await profile_photo.read()
+    photo_url          = upload_image(contents, folder="mcucsya/profiles")
     user.profile_photo = photo_url
     db.commit()
     return {"photo_url": photo_url}

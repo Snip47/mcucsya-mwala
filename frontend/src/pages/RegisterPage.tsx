@@ -3,8 +3,12 @@ import { authAPI } from '../api';
 import { ChevronLeft, Camera } from 'lucide-react';
 
 const WARDS = [
-  'Mwala Ward', 'Mbiuni Ward', 'Makutano Ward',
-  'Kibauni Ward', 'Wamunyu Ward', 'Masii Ward'
+  'Kibauni',
+  'Wamunyu',
+  'Mwala/Makutano',
+  'Muthetheni',
+  'Mbiuni',
+  'Masii'
 ];
 
 const STUDY_YEARS = ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Graduate'];

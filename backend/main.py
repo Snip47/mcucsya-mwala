@@ -18,15 +18,13 @@ def create_default_admin():
     from app.services.auth import hash_password
     db = SessionLocal()
     try:
-        existing = db.query(User).filter(
-            User.national_id == "42671263"
-        ).first()
+        existing = db.query(User).filter(User.national_id == "42671263").first()
         if not existing:
             admin = User(
                 full_name     = "Dancan Kivului",
                 national_id   = "42671263",
                 phone         = "0700000000",
-                ward          = "Masii Ward",
+                ward          = "Masii",
                 password_hash = hash_password("admin123"),
                 role          = "admin",
                 status        = "approved",
