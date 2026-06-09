@@ -5,10 +5,10 @@ import { Eye, EyeOff, Shield, Users, Crown, User, Fingerprint } from 'lucide-rea
 type RoleType = 'member' | 'leader' | 'mp' | 'admin';
 
 const ROLES = [
-  { id: 'member' as RoleType, label: 'Member',  icon: User,   color: '#1a3a6a', desc: 'Student member'        },
-  { id: 'leader' as RoleType, label: 'Leader',  icon: Users,  color: '#2d1b69', desc: 'Chapter leader'        },
-  { id: 'mp'     as RoleType, label: 'MP',       icon: Crown,  color: '#8b0000', desc: 'Member of Parliament'  },
-  { id: 'admin'  as RoleType, label: 'Admin',    icon: Shield, color: '#1a1a1a', desc: 'System administrator'  },
+  { id: 'member' as RoleType, label: 'Member',  icon: User,   color: '#1a3a6a', desc: 'Student member'       },
+  { id: 'leader' as RoleType, label: 'Leader',  icon: Users,  color: '#2d1b69', desc: 'Chapter leader'       },
+  { id: 'mp'     as RoleType, label: 'MP',       icon: Crown,  color: '#8b0000', desc: 'Member of Parliament' },
+  { id: 'admin'  as RoleType, label: 'Admin',    icon: Shield, color: '#1a1a1a', desc: 'System admin'         },
 ];
 
 interface Props {
@@ -56,29 +56,20 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
     const savedId   = localStorage.getItem('bio_id');
     const savedRole = localStorage.getItem('bio_role');
     const savedPass = localStorage.getItem('bio_pass');
-
     if (!savedId || !savedRole || !savedPass) {
-      setError('No saved credentials. Login with password first to enable biometrics.');
+      setError('No saved credentials. Login with password first.');
       return;
     }
-
     try {
       const challenge = new Uint8Array(32);
       crypto.getRandomValues(challenge);
-
       await navigator.credentials.get({
-        publicKey: {
-          challenge,
-          timeout:          60000,
-          userVerification: 'required',
-          rpId:             window.location.hostname,
-        }
+        publicKey: { challenge, timeout: 60000, userVerification: 'required', rpId: window.location.hostname }
       } as any);
-
       setLoading(true);
       await login(savedId, savedPass, savedRole as RoleType);
     } catch {
-      setError('Biometric failed. Please use password login.');
+      setError('Biometric failed. Please use password.');
     } finally {
       setLoading(false);
     }
@@ -91,8 +82,9 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
     <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #0a0a0a 0%, #1a3a1a 40%, #2d1b69 80%, #0a0a0a 100%)' }}>
       <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #1a3a1a, #c9a84c, #8b0000, #c9a84c, #1a3a1a)' }} />
 
+      {/* Logo */}
       <div className="flex flex-col items-center pt-8 pb-4 px-6">
-        <img src="/logo.png" alt="MCUCSYA" className="w-28 h-28 object-contain mb-3"
+        <img src="/logo.png" alt="MCUCSYA" className="w-24 h-24 object-contain mb-3"
           style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.7))' }} />
         <h1 className="text-white text-2xl font-bold tracking-wide">MCUCSYA</h1>
         <p className="text-yellow-400 text-sm font-semibold mt-0.5">Mwala Chapter</p>
@@ -100,9 +92,9 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
           Machakos County University & Colleges Students Youth Association
         </p>
         <div className="flex items-center gap-2 mt-3">
-          <div className="h-px w-12" style={{ background: '#c9a84c' }} />
-          <div className="w-2 h-2 rounded-full" style={{ background: '#c9a84c' }} />
-          <div className="h-px w-12" style={{ background: '#c9a84c' }} />
+          <div className="h-px w-10" style={{ background: '#c9a84c' }} />
+          <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#c9a84c' }} />
+          <div className="h-px w-10" style={{ background: '#c9a84c' }} />
         </div>
       </div>
 
@@ -110,7 +102,6 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
         <div className="flex-1 px-5 pb-8">
           <p className="text-gray-300 text-sm text-center mb-4 font-medium">Select your role to continue</p>
 
-          {/* Biometric quick login */}
           {biometricAvailable && hasSavedBio && (
             <button onClick={handleBiometric}
               className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl mb-4 text-white font-semibold"
@@ -123,16 +114,32 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
             </button>
           )}
 
-          <div className="grid grid-cols-2 gap-3 mb-5">
+          {/* Role buttons — 2x2 grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
             {ROLES.map(role => {
               const Icon = role.icon;
               return (
-                <button key={role.id} onClick={() => setSelectedRole(role.id)}
-                  className="flex flex-col items-center py-5 px-3 rounded-2xl text-white active:scale-95 transition-transform"
-                  style={{ background: role.color, border: '1.5px solid rgba(201,168,76,0.25)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
-                  <Icon className="w-8 h-8 mb-2" />
-                  <span className="font-bold text-base">{role.label}</span>
-                  <span className="text-xs opacity-60 mt-0.5 text-center">{role.desc}</span>
+                <button
+                  key={role.id}
+                  onClick={() => setSelectedRole(role.id)}
+                  style={{
+                    background:    role.color,
+                    border:        '1.5px solid rgba(201,168,76,0.25)',
+                    boxShadow:     '0 4px 20px rgba(0,0,0,0.4)',
+                    borderRadius:  '16px',
+                    padding:       '20px 12px',
+                    display:       'flex',
+                    flexDirection: 'column',
+                    alignItems:    'center',
+                    color:         'white',
+                    cursor:        'pointer',
+                    minHeight:     '110px',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon style={{ width: 32, height: 32, marginBottom: 8 }} />
+                  <span style={{ fontWeight: 700, fontSize: 16 }}>{role.label}</span>
+                  <span style={{ fontSize: 11, opacity: 0.6, marginTop: 2, textAlign: 'center' }}>{role.desc}</span>
                 </button>
               );
             })}
@@ -151,11 +158,18 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
       ) : (
         <div className="flex-1 bg-white rounded-t-3xl px-6 pt-6 pb-10 shadow-2xl">
           <div className="flex items-center gap-3 mb-5">
-            <button onClick={() => { setSelectedRole(null); setError(''); }}
-              className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 font-bold text-lg">
+            <button
+              onClick={() => { setSelectedRole(null); setError(''); }}
+              style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: '#f0f0f0', border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 18, fontWeight: 'bold', cursor: 'pointer', color: '#333'
+              }}>
               ←
             </button>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-sm font-medium"
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-sm font-medium"
               style={{ background: ROLES.find(r => r.id === selectedRole)?.color }}>
               {React.createElement(ROLES.find(r => r.id === selectedRole)!.icon, { className: 'w-4 h-4' })}
               <span>{ROLES.find(r => r.id === selectedRole)?.label} Login</span>
@@ -163,7 +177,9 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
           </div>
 
           <h2 className="text-2xl font-bold text-gray-800 mb-1">Welcome back</h2>
-          <p className="text-gray-500 text-sm mb-5">Sign in to your {ROLES.find(r => r.id === selectedRole)?.label} dashboard</p>
+          <p className="text-gray-500 text-sm mb-5">
+            Sign in to your {ROLES.find(r => r.id === selectedRole)?.label} dashboard
+          </p>
 
           {selectedRole === 'admin' && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-2.5 mb-4">
@@ -179,33 +195,44 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
 
           <div className="mb-4">
             <label className="text-sm font-medium text-gray-700 mb-1.5 block">National ID Number</label>
-            <input value={nationalId} onChange={e => setNationalId(e.target.value)}
-              placeholder="e.g. 12345678" type="number"
-              className="w-full border-2 border-gray-100 rounded-xl px-4 py-3.5 text-sm outline-none bg-gray-50 focus:border-green-500 transition" />
+            <input
+              value={nationalId}
+              onChange={e => setNationalId(e.target.value)}
+              placeholder="e.g. 12345678"
+              type="number"
+              className="w-full border-2 border-gray-100 rounded-xl px-4 py-3.5 text-sm outline-none bg-gray-50 focus:border-green-500 transition"
+            />
           </div>
 
           <div className="mb-5">
             <label className="text-sm font-medium text-gray-700 mb-1.5 block">Password</label>
             <div className="relative">
-              <input value={password} onChange={e => setPassword(e.target.value)}
+              <input
+                value={password}
+                onChange={e => setPassword(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                type={showPass ? 'text' : 'password'} placeholder="Enter your password"
-                className="w-full border-2 border-gray-100 rounded-xl px-4 py-3.5 text-sm outline-none pr-12 bg-gray-50 focus:border-green-500 transition" />
+                type={showPass ? 'text' : 'password'}
+                placeholder="Enter your password"
+                className="w-full border-2 border-gray-100 rounded-xl px-4 py-3.5 text-sm outline-none pr-12 bg-gray-50 focus:border-green-500 transition"
+              />
               <button onClick={() => setShowPass(!showPass)} className="absolute right-4 top-4 text-gray-400">
                 {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          <button onClick={handleLogin} disabled={loading}
+          <button
+            onClick={handleLogin}
+            disabled={loading}
             className="w-full text-white py-4 rounded-xl font-semibold text-sm disabled:opacity-60 shadow-lg mb-3 transition"
             style={{ background: ROLES.find(r => r.id === selectedRole)?.color }}>
             {loading ? 'Signing in...' : `Sign In as ${ROLES.find(r => r.id === selectedRole)?.label}`}
           </button>
 
           {biometricAvailable && hasSavedBio && savedBioRole === selectedRole && (
-            <button onClick={handleBiometric}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-medium mb-3 transition hover:border-gray-300">
+            <button
+              onClick={handleBiometric}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-medium mb-3">
               <Fingerprint className="w-5 h-5" />
               Sign in with Biometrics
             </button>
@@ -218,13 +245,19 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
                 <span className="text-xs text-gray-400">or</span>
                 <div className="flex-1 h-px bg-gray-100" />
               </div>
-              <button onClick={() => onRegister(selectedRole)}
+              <button
+                onClick={() => onRegister(selectedRole)}
                 className="w-full py-4 rounded-xl font-semibold text-sm border-2 transition"
-                style={{ borderColor: ROLES.find(r => r.id === selectedRole)?.color, color: ROLES.find(r => r.id === selectedRole)?.color }}>
+                style={{
+                  borderColor: ROLES.find(r => r.id === selectedRole)?.color,
+                  color:       ROLES.find(r => r.id === selectedRole)?.color
+                }}>
                 Register as {ROLES.find(r => r.id === selectedRole)?.label}
               </button>
               <p className="text-center text-xs text-gray-400 mt-3">
-                {selectedRole === 'member' ? '✅ Instant access after registration' : '⏳ Admin approval required before login'}
+                {selectedRole === 'member'
+                  ? '✅ Instant access after registration'
+                  : '⏳ Admin approval required before login'}
               </p>
             </>
           )}

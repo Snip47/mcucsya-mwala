@@ -109,7 +109,7 @@ const AdminPage: React.FC<{ setPage: (p: string) => void }> = ({ setPage }) => {
     } catch (e: any) { showErr(e.response?.data?.detail || 'Failed'); }
   };
 
-  const WARDS = ['Mwala Ward', 'Mbiuni Ward', 'Makutano Ward', 'Kibauni Ward', 'Wamunyu Ward', 'Masii Ward'];
+  const WARDS = ['Kibauni', 'Wamunyu', 'Mwala/Makutano', 'Muthetheni', 'Mbiuni', 'Masii'];
 
   return (
     <div className="pb-24">
