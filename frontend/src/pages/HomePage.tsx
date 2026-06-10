@@ -110,7 +110,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
         <div className="bg-green-600 rounded-xl px-3 py-2 mt-3">
-          <p className="text-green-100 text-xs">🌍 Mwala Constituency · {user?.sub_location}</p>
+          <p className="text-green-100 text-xs">🌍 Mwala Constituency · {user?.ward}</p>
           <p className="text-white text-sm font-medium mt-0.5">Unity · Progress · Youth Empowerment</p>
         </div>
       </div>
