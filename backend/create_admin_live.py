@@ -22,8 +22,8 @@ else:
     admin = User(
         full_name     = "Dancan Kivului",
         national_id   = "42671263",
-        phone         = "0700000000",
-        ward          = "Masii Ward",
+        phone         = "0742162276",
+        ward          = "kibauni ward",
         password_hash = hash_password("admin123"),
         role          = "admin",
         status        = "approved",
