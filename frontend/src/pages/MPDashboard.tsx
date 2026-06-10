@@ -1,14 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { bursaryAPI, opportunitiesAPI, postsAPI, eventsAPI, chatAPI, Post, Event, ChatMessage } from '../api';
+import React, { useEffect, useState } from 'react';
+import { bursaryAPI, opportunitiesAPI, postsAPI, eventsAPI, Post, Event } from '../api';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { getBaseUrl } from '../api';
 import {
-  Send, Plus, RefreshCw, Crown, BookOpen,
-  MessageCircle, Briefcase, ExternalLink, Link,
-  Calendar, MapPin, Users, Megaphone, Trash2
+  Plus, RefreshCw, Crown, BookOpen,
+  Briefcase, ExternalLink, Calendar, Users, MapPin, Trash2
 } from 'lucide-react';
-
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8002/api';
 
 const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
   const { user, token }                       = useAuth();
@@ -17,24 +15,18 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
   const [events,        setEvents]            = useState<Event[]>([]);
   const [posts,         setPosts]             = useState<Post[]>([]);
   const [leaders,       setLeaders]           = useState<any[]>([]);
-  const [messages,      setMessages]          = useState<ChatMessage[]>([]);
   const [loading,       setLoading]           = useState(true);
-  const [newMsg,        setNewMsg]            = useState('');
-  const [sending,       setSending]           = useState(false);
   const [success,       setSuccess]           = useState('');
   const [error,         setError]             = useState('');
   const [showBursaryForm, setShowBursaryForm] = useState(false);
   const [showJobForm,     setShowJobForm]     = useState(false);
   const [showPostForm,    setShowPostForm]    = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
 
   const [bursaryForm, setBursaryForm] = useState({ title: '', link: '', deadline: '', notes: '' });
   const [jobForm,     setJobForm]     = useState({ title: '', content: '', opp_type: 'job', apply_link: '', deadline: '' });
   const [postForm,    setPostForm]    = useState({ title: '', content: '', post_type: 'announcement' });
 
   useEffect(() => { loadAll(); }, []);
-  useEffect(() => { if (page === 'chat') loadMessages(); }, [page]);
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   const loadAll = async () => {
     setLoading(true);
@@ -44,7 +36,7 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
         opportunitiesAPI.getAll(),
         eventsAPI.getAll(),
         postsAPI.getAll(),
-        axios.get(`${BASE_URL}/leaders`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${getBaseUrl()}/leaders`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       setBursaryLinks(b.data);
       setOpportunities(o.data);
@@ -52,11 +44,6 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
       setPosts(p.data);
       setLeaders(l.data);
     } finally { setLoading(false); }
-  };
-
-  const loadMessages = async () => {
-    const res = await chatAPI.getMessages('mp');
-    setMessages(res.data);
   };
 
   const showMsg = (m: string) => { setSuccess(m); setTimeout(() => setSuccess(''), 3000); };
@@ -110,16 +97,6 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
     } catch (e: any) { showErr(e.response?.data?.detail || 'Failed'); }
   };
 
-  const handleSendChat = async () => {
-    if (!newMsg.trim() || sending) return;
-    setSending(true);
-    try {
-      await chatAPI.sendMessage('mp', newMsg.trim());
-      setNewMsg('');
-      loadMessages();
-    } finally { setSending(false); }
-  };
-
   const parseBursaryLink = (content: string) => ({
     link:     (content.match(/BURSARY_LINK:(.+?)(\n|$)/)?.[1] || '').trim(),
     notes:    (content.match(/NOTES:(.+?)(\n|$)/)?.[1] || '').trim(),
@@ -160,7 +137,7 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
         {success && <div className="bg-green-50 text-green-700 text-sm rounded-xl px-4 py-2.5 mb-3 border border-green-100">{success}</div>}
         {error   && <div className="bg-red-50 text-red-600 text-sm rounded-xl px-4 py-2.5 mb-3 border border-red-100">{error}</div>}
 
-        {/* HOME — announcements + post button */}
+        {/* HOME */}
         {page === 'home' && (
           <>
             <button onClick={() => setShowPostForm(!showPostForm)}
@@ -169,25 +146,22 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
               <Plus className="w-4 h-4" />
               {showPostForm ? 'Cancel' : 'Post Announcement'}
             </button>
-
             {showPostForm && (
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
                 <select value={postForm.post_type} onChange={e => setPostForm(p => ({...p, post_type: e.target.value}))}
                   className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3 bg-white">
                   <option value="announcement">📢 Announcement</option>
-                  <option value="county_program">🏛️ development programs</option>
+                  <option value="county_program">🏛️ County Program</option>
                 </select>
                 <input value={postForm.title} onChange={e => setPostForm(p => ({...p, title: e.target.value}))}
                   placeholder="Title *" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3" />
                 <textarea value={postForm.content} onChange={e => setPostForm(p => ({...p, content: e.target.value}))}
                   placeholder="Write your message..." rows={4}
                   className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3 resize-none" />
-                <button onClick={handlePost}
-                  className="w-full text-white py-3 rounded-xl text-sm font-bold"
+                <button onClick={handlePost} className="w-full text-white py-3 rounded-xl text-sm font-bold"
                   style={{ background: '#8b0000' }}>Publish Announcement</button>
               </div>
             )}
-
             {posts.filter(p => p.post_type !== 'opportunity').map(post => (
               <div key={post.id} className="bg-white rounded-2xl shadow-sm mb-3 overflow-hidden border border-gray-100">
                 <div className="p-4">
@@ -212,7 +186,6 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
               <Plus className="w-4 h-4" />
               {showJobForm ? 'Cancel' : 'Post Job / Internship / Attachment'}
             </button>
-
             {showJobForm && (
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
                 <select value={jobForm.opp_type} onChange={e => setJobForm(p => ({...p, opp_type: e.target.value}))}
@@ -233,12 +206,10 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
                   <input value={jobForm.deadline} onChange={e => setJobForm(p => ({...p, deadline: e.target.value}))}
                     type="date" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none" />
                 </div>
-                <button onClick={handlePostJob}
-                  className="w-full text-white py-3 rounded-xl text-sm font-bold"
+                <button onClick={handlePostJob} className="w-full text-white py-3 rounded-xl text-sm font-bold"
                   style={{ background: '#8b0000' }}>Post Opportunity</button>
               </div>
             )}
-
             {opportunities.length === 0 ? (
               <div className="text-center py-12">
                 <Briefcase className="w-10 h-10 text-gray-200 mx-auto mb-2" />
@@ -273,7 +244,6 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
               <Plus className="w-4 h-4" />
               {showBursaryForm ? 'Cancel' : 'Post Bursary Portal Link'}
             </button>
-
             {showBursaryForm && (
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
                 <input value={bursaryForm.title} onChange={e => setBursaryForm(p => ({...p, title: e.target.value}))}
@@ -288,12 +258,10 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
                   <input value={bursaryForm.deadline} onChange={e => setBursaryForm(p => ({...p, deadline: e.target.value}))}
                     type="date" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none" />
                 </div>
-                <button onClick={handlePostBursary}
-                  className="w-full text-white py-3 rounded-xl text-sm font-bold"
+                <button onClick={handlePostBursary} className="w-full text-white py-3 rounded-xl text-sm font-bold"
                   style={{ background: '#8b0000' }}>Post Bursary Link</button>
               </div>
             )}
-
             {bursaryLinks.length === 0 ? (
               <div className="text-center py-12">
                 <BookOpen className="w-10 h-10 text-gray-200 mx-auto mb-2" />
@@ -325,91 +293,49 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
 
         {/* EVENTS */}
         {page === 'events' && (
-          <>
-            <p className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">Upcoming Events</p>
-            {events.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-10 h-10 text-gray-200 mx-auto mb-2" />
-                <p className="text-gray-400 text-sm">No upcoming events</p>
-              </div>
-            ) : events.map(event => (
-              <div key={event.id} className="bg-white rounded-2xl shadow-sm mb-3 border border-gray-100 p-4">
-                <h3 className="font-bold text-gray-800 mb-1">{event.title}</h3>
-                <p className="text-gray-500 text-sm mb-2">{event.description}</p>
-                <p className="text-xs font-semibold" style={{ color: '#8b0000' }}>📍 {event.location}</p>
-                <p className="text-xs text-gray-400 mt-1">📅 {new Date(event.event_date).toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                <p className="text-xs text-gray-400 mt-0.5">By: {event.author_name}</p>
-              </div>
-            ))}
-          </>
+          events.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar className="w-10 h-10 text-gray-200 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">No upcoming events</p>
+            </div>
+          ) : events.map(event => (
+            <div key={event.id} className="bg-white rounded-2xl shadow-sm mb-3 border border-gray-100 p-4">
+              <h3 className="font-bold text-gray-800 mb-1">{event.title}</h3>
+              <p className="text-gray-500 text-sm mb-2">{event.description}</p>
+              <p className="text-xs font-semibold" style={{ color: '#8b0000' }}>📍 {event.location}</p>
+              <p className="text-xs text-gray-400 mt-1">📅 {new Date(event.event_date).toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            </div>
+          ))
         )}
 
         {/* LEADERS */}
         {page === 'leaders' && (
-          <>
-            <p className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">Mwala Chapter Leaders</p>
-            {leaders.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="w-10 h-10 text-gray-200 mx-auto mb-2" />
-                <p className="text-gray-400 text-sm">No leaders yet</p>
-              </div>
-            ) : leaders.map((l: any) => (
-              <div key={l.id} className="bg-white rounded-2xl shadow-sm mb-3 border border-gray-100 p-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center font-bold text-xl text-white shrink-0"
-                    style={{ background: '#2d1b69' }}>
-                    {l.profile_photo ? <img src={l.profile_photo} alt={l.full_name} className="w-full h-full object-cover" /> : l.full_name?.[0]}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-800">{l.full_name}</h3>
-                    <p className="text-purple-600 text-sm font-semibold">{l.position || 'Chapter Leader'}</p>
-                    <p className="text-gray-400 text-xs">📍 {l.ward}</p>
+          leaders.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-10 h-10 text-gray-200 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">No leaders yet</p>
+            </div>
+          ) : leaders.map((l: any) => (
+            <div key={l.id} className="bg-white rounded-2xl shadow-sm mb-3 border border-gray-100 p-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center font-bold text-xl text-white shrink-0"
+                  style={{ background: '#2d1b69' }}>
+                  {l.profile_photo
+                    ? <img src={l.profile_photo} alt={l.full_name} className="w-full h-full object-cover" />
+                    : l.full_name?.[0]
+                  }
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-800">{l.full_name}</h3>
+                  <p className="text-purple-600 text-sm font-semibold">{l.position || 'Chapter Leader'}</p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3 h-3 text-gray-400" />
+                    <p className="text-gray-400 text-xs">{l.ward}</p>
                   </div>
                 </div>
               </div>
-            ))}
-          </>
-        )}
-
-        {/* CHAT */}
-        {page === 'chat' && (
-          <div className="flex flex-col" style={{ height: 'calc(100vh - 240px)' }}>
-            <p className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">Members asking questions</p>
-            <div className="flex-1 overflow-y-auto space-y-3 mb-3">
-              {messages.length === 0 ? (
-                <div className="text-center py-10">
-                  <MessageCircle className="w-10 h-10 text-gray-200 mx-auto mb-2" />
-                  <p className="text-gray-400 text-sm">No messages yet</p>
-                </div>
-              ) : messages.map(msg => {
-                const isMe = msg.sender_name === user?.full_name;
-                return (
-                  <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-xs rounded-2xl px-4 py-3 text-sm shadow-sm ${isMe ? 'text-white rounded-tr-sm' : 'bg-white rounded-tl-sm'}`}
-                      style={isMe ? { background: '#8b0000' } : {}}>
-                      {!isMe && <p className="text-xs font-bold mb-0.5" style={{ color: '#8b0000' }}>{msg.sender_name}</p>}
-                      <p>{msg.content}</p>
-                      <p className={`text-xs mt-1 ${isMe ? 'text-red-200' : 'text-gray-400'}`}>
-                        {new Date(msg.created_at).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-              <div ref={bottomRef} />
             </div>
-            <div className="flex items-center gap-2 bg-gray-50 rounded-2xl px-4 py-2.5 border border-gray-100">
-              <input value={newMsg} onChange={e => setNewMsg(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSendChat()}
-                placeholder="Reply to members..."
-                className="flex-1 bg-transparent text-sm outline-none" />
-              <button onClick={handleSendChat} disabled={!newMsg.trim() || sending}
-                className="w-9 h-9 rounded-full text-white flex items-center justify-center disabled:opacity-40"
-                style={{ background: '#8b0000' }}>
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+          ))
         )}
       </div>
     </div>

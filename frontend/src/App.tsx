@@ -9,7 +9,6 @@ import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
 import BottomNav from './components/BottomNav';
 import { Home, Briefcase, BookOpen, Calendar, User, Users } from 'lucide-react';
-
 const AppContent: React.FC = () => {
   const { user, loading, isAdmin } = useAuth();
   const [page,      setPage]       = useState('home');

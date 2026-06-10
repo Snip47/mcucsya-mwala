@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff, Shield, Users, Crown, User, Fingerprint } from 'lucide-react';
+import { Eye, EyeOff, Shield, Users, Crown, User } from 'lucide-react';
 
 type RoleType = 'member' | 'leader' | 'mp' | 'admin';
 
@@ -16,35 +16,19 @@ interface Props {
 }
 
 const LoginPage: React.FC<Props> = ({ onRegister }) => {
-  const { login }                         = useAuth();
-  const [selectedRole, setSelectedRole]   = useState<RoleType | null>(null);
-  const [nationalId,   setNationalId]     = useState('');
-  const [password,     setPassword]       = useState('');
-  const [showPass,     setShowPass]       = useState(false);
-  const [loading,      setLoading]        = useState(false);
-  const [error,        setError]          = useState('');
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.PublicKeyCredential) {
-      PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
-        .then(ok => setBiometricAvailable(ok))
-        .catch(() => setBiometricAvailable(false));
-    }
-  }, []);
-
-  const saveBiometricCredentials = (id: string, role: string, pass: string) => {
-    localStorage.setItem('bio_id',   id);
-    localStorage.setItem('bio_role', role);
-    localStorage.setItem('bio_pass', pass);
-  };
+  const { login }                       = useAuth();
+  const [selectedRole, setSelectedRole] = useState<RoleType | null>(null);
+  const [nationalId,   setNationalId]   = useState('');
+  const [password,     setPassword]     = useState('');
+  const [showPass,     setShowPass]     = useState(false);
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState('');
 
   const handleLogin = async () => {
     if (!nationalId || !password) { setError('Please fill in all fields'); return; }
     setLoading(true); setError('');
     try {
       await login(nationalId, password, selectedRole!);
-      saveBiometricCredentials(nationalId, selectedRole!, password);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed. Please try again.');
     } finally {
@@ -52,37 +36,10 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
     }
   };
 
-  const handleBiometric = async () => {
-    const savedId   = localStorage.getItem('bio_id');
-    const savedRole = localStorage.getItem('bio_role');
-    const savedPass = localStorage.getItem('bio_pass');
-    if (!savedId || !savedRole || !savedPass) {
-      setError('No saved credentials. Login with password first.');
-      return;
-    }
-    try {
-      const challenge = new Uint8Array(32);
-      crypto.getRandomValues(challenge);
-      await navigator.credentials.get({
-        publicKey: { challenge, timeout: 60000, userVerification: 'required', rpId: window.location.hostname }
-      } as any);
-      setLoading(true);
-      await login(savedId, savedPass, savedRole as RoleType);
-    } catch {
-      setError('Biometric failed. Please use password.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const savedBioRole = localStorage.getItem('bio_role');
-  const hasSavedBio  = !!localStorage.getItem('bio_id');
-
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #0a0a0a 0%, #1a3a1a 40%, #2d1b69 80%, #0a0a0a 100%)' }}>
       <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #1a3a1a, #c9a84c, #8b0000, #c9a84c, #1a3a1a)' }} />
 
-      {/* Logo */}
       <div className="flex flex-col items-center pt-8 pb-4 px-6">
         <img src="/logo.png" alt="MCUCSYA" className="w-24 h-24 object-contain mb-3"
           style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.7))' }} />
@@ -102,19 +59,6 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
         <div className="flex-1 px-5 pb-8">
           <p className="text-gray-300 text-sm text-center mb-4 font-medium">Select your role to continue</p>
 
-          {biometricAvailable && hasSavedBio && (
-            <button onClick={handleBiometric}
-              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl mb-4 text-white font-semibold"
-              style={{ background: 'rgba(201,168,76,0.2)', border: '1.5px solid #c9a84c' }}>
-              <Fingerprint className="w-6 h-6" style={{ color: '#c9a84c' }} />
-              <div className="text-left">
-                <p className="text-sm font-bold" style={{ color: '#c9a84c' }}>Sign in with Biometrics</p>
-                <p className="text-xs text-gray-300">as {savedBioRole}</p>
-              </div>
-            </button>
-          )}
-
-          {/* Role buttons — 2x2 grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
             {ROLES.map(role => {
               const Icon = role.icon;
@@ -123,17 +67,17 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
                   key={role.id}
                   onClick={() => setSelectedRole(role.id)}
                   style={{
-                    background:    role.color,
-                    border:        '1.5px solid rgba(201,168,76,0.25)',
-                    boxShadow:     '0 4px 20px rgba(0,0,0,0.4)',
-                    borderRadius:  '16px',
-                    padding:       '20px 12px',
-                    display:       'flex',
-                    flexDirection: 'column',
-                    alignItems:    'center',
-                    color:         'white',
-                    cursor:        'pointer',
-                    minHeight:     '110px',
+                    background:     role.color,
+                    border:         '1.5px solid rgba(201,168,76,0.25)',
+                    boxShadow:      '0 4px 20px rgba(0,0,0,0.4)',
+                    borderRadius:   '16px',
+                    padding:        '20px 12px',
+                    display:        'flex',
+                    flexDirection:  'column',
+                    alignItems:     'center',
+                    color:          'white',
+                    cursor:         'pointer',
+                    minHeight:      '110px',
                     justifyContent: 'center',
                   }}
                 >
@@ -168,8 +112,7 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
               }}>
               ←
             </button>
-            <div
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-sm font-medium"
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-sm font-medium"
               style={{ background: ROLES.find(r => r.id === selectedRole)?.color }}>
               {React.createElement(ROLES.find(r => r.id === selectedRole)!.icon, { className: 'w-4 h-4' })}
               <span>{ROLES.find(r => r.id === selectedRole)?.label} Login</span>
@@ -195,48 +138,29 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
 
           <div className="mb-4">
             <label className="text-sm font-medium text-gray-700 mb-1.5 block">National ID Number</label>
-            <input
-              value={nationalId}
-              onChange={e => setNationalId(e.target.value)}
-              placeholder="e.g. 12345678"
-              type="number"
-              className="w-full border-2 border-gray-100 rounded-xl px-4 py-3.5 text-sm outline-none bg-gray-50 focus:border-green-500 transition"
-            />
+            <input value={nationalId} onChange={e => setNationalId(e.target.value)}
+              placeholder="e.g. 12345678" type="number"
+              className="w-full border-2 border-gray-100 rounded-xl px-4 py-3.5 text-sm outline-none bg-gray-50" />
           </div>
 
           <div className="mb-5">
             <label className="text-sm font-medium text-gray-700 mb-1.5 block">Password</label>
             <div className="relative">
-              <input
-                value={password}
-                onChange={e => setPassword(e.target.value)}
+              <input value={password} onChange={e => setPassword(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                type={showPass ? 'text' : 'password'}
-                placeholder="Enter your password"
-                className="w-full border-2 border-gray-100 rounded-xl px-4 py-3.5 text-sm outline-none pr-12 bg-gray-50 focus:border-green-500 transition"
-              />
+                type={showPass ? 'text' : 'password'} placeholder="Enter your password"
+                className="w-full border-2 border-gray-100 rounded-xl px-4 py-3.5 text-sm outline-none pr-12 bg-gray-50" />
               <button onClick={() => setShowPass(!showPass)} className="absolute right-4 top-4 text-gray-400">
                 {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          <button
-            onClick={handleLogin}
-            disabled={loading}
-            className="w-full text-white py-4 rounded-xl font-semibold text-sm disabled:opacity-60 shadow-lg mb-3 transition"
+          <button onClick={handleLogin} disabled={loading}
+            className="w-full text-white py-4 rounded-xl font-semibold text-sm disabled:opacity-60 shadow-lg mb-4"
             style={{ background: ROLES.find(r => r.id === selectedRole)?.color }}>
             {loading ? 'Signing in...' : `Sign In as ${ROLES.find(r => r.id === selectedRole)?.label}`}
           </button>
-
-          {biometricAvailable && hasSavedBio && savedBioRole === selectedRole && (
-            <button
-              onClick={handleBiometric}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-medium mb-3">
-              <Fingerprint className="w-5 h-5" />
-              Sign in with Biometrics
-            </button>
-          )}
 
           {selectedRole !== 'admin' && (
             <>
@@ -245,19 +169,13 @@ const LoginPage: React.FC<Props> = ({ onRegister }) => {
                 <span className="text-xs text-gray-400">or</span>
                 <div className="flex-1 h-px bg-gray-100" />
               </div>
-              <button
-                onClick={() => onRegister(selectedRole)}
-                className="w-full py-4 rounded-xl font-semibold text-sm border-2 transition"
-                style={{
-                  borderColor: ROLES.find(r => r.id === selectedRole)?.color,
-                  color:       ROLES.find(r => r.id === selectedRole)?.color
-                }}>
+              <button onClick={() => onRegister(selectedRole)}
+                className="w-full py-4 rounded-xl font-semibold text-sm border-2"
+                style={{ borderColor: ROLES.find(r => r.id === selectedRole)?.color, color: ROLES.find(r => r.id === selectedRole)?.color }}>
                 Register as {ROLES.find(r => r.id === selectedRole)?.label}
               </button>
               <p className="text-center text-xs text-gray-400 mt-3">
-                {selectedRole === 'member'
-                  ? '✅ Instant access after registration'
-                  : '⏳ Admin approval required before login'}
+                {selectedRole === 'member' ? '✅ Instant access after registration' : '⏳ Admin approval required before login'}
               </p>
             </>
           )}

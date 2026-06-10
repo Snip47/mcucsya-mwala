@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import { authAPI, User } from '../api';
+import { authAPI, User, getBaseUrl } from '../api';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8002/api';
 const ADMIN_ID = '42671263';
 
 interface AuthContextType {
@@ -32,12 +31,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   }, []);
 
-  // Auto-kick if deleted
   useEffect(() => {
     if (!token) return;
     const interval = setInterval(async () => {
       try {
-        await axios.get(`${BASE_URL}/auth/validate`, {
+        await axios.get(`${getBaseUrl()}/auth/validate`, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } catch {

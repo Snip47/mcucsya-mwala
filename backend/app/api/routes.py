@@ -7,7 +7,6 @@ from app.models.user import User
 from app.models.post import Post
 from app.models.bursary import BursaryApplication, BursaryAnnouncement
 from app.models.event import Event, EventRSVP
-from app.models.message import ChatMessage
 from app.services.auth import decode_token
 from app.services.cloudinary_upload import upload_image, upload_document
 
@@ -259,36 +258,6 @@ def get_leaders(db: Session = Depends(get_db), authorization: str = Header(...))
     return db.query(User).filter(
         User.role == "leader", User.status == "approved"
     ).order_by(User.ward).all()
-
-# ── Chat ───────────────────────────────────────────────
-@router.get("/chat/{recipient_role}")
-def get_chat(recipient_role: str, db: Session = Depends(get_db), authorization: str = Header(...)):
-    get_current_user(authorization, db)
-    return db.query(ChatMessage).filter(
-        ChatMessage.recipient_role == recipient_role
-    ).order_by(ChatMessage.created_at.asc()).limit(100).all()
-
-@router.post("/chat/{recipient_role}")
-def send_chat(
-    recipient_role: str,
-    content: str    = Form(...),
-    db: Session     = Depends(get_db),
-    authorization: str = Header(...)
-):
-    user = get_current_user(authorization, db)
-    if not content.strip():
-        raise HTTPException(status_code=400, detail="Message cannot be empty")
-    msg = ChatMessage(
-        sender_id=user.id, sender_name=user.full_name,
-        sender_role=user.role, recipient_role=recipient_role,
-        content=content.strip()
-    )
-    db.add(msg)
-    db.commit()
-    db.refresh(msg)
-    return msg
-
-# ── Profile ────────────────────────────────────────────
 @router.get("/profile")
 def get_profile(db: Session = Depends(get_db), authorization: str = Header(...)):
     return get_current_user(authorization, db)

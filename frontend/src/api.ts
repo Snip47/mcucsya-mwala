@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8002/api';
+const BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8002/api';
 const API      = axios.create({ baseURL: BASE_URL });
 
 API.interceptors.request.use(config => {
@@ -8,6 +8,8 @@ API.interceptors.request.use(config => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+export const getBaseUrl = () => BASE_URL;
 
 export interface User {
   id:             number;
@@ -70,15 +72,6 @@ export interface Event {
   created_at:  string;
 }
 
-export interface ChatMessage {
-  id:             number;
-  sender_name:    string;
-  sender_role:    string;
-  recipient_role: string;
-  content:        string;
-  created_at:     string;
-}
-
 export const authAPI = {
   loginWithRole:  (national_id: string, password: string, role: string) => {
     const form = new FormData();
@@ -111,37 +104,28 @@ export const opportunitiesAPI = {
 };
 
 export const bursaryAPI = {
-  getLinks:     ()               => API.get('/bursary/links'),
-  postLink:     (data: FormData) => API.post('/bursary/link',   data),
-  apply:        (data: FormData) => API.post('/bursary/apply',  data),
-  getMyApps:    ()               => API.get('/bursary/my-applications'),
+  getLinks:  ()               => API.get('/bursary/links'),
+  postLink:  (data: FormData) => API.post('/bursary/link',  data),
+  apply:     (data: FormData) => API.post('/bursary/apply', data),
+  getMyApps: ()               => API.get('/bursary/my-applications'),
 };
 
 export const eventsAPI = {
-  getAll:  ()               => API.get('/events'),
-  create:  (data: FormData) => API.post('/events', data),
-  rsvp:    (id: number)     => API.post(`/events/${id}/rsvp`),
-};
-
-export const chatAPI = {
-  getMessages: (role: string)                  => API.get(`/chat/${role}`),
-  sendMessage: (role: string, content: string) => {
-    const form = new FormData();
-    form.append('content', content);
-    return API.post(`/chat/${role}`, form);
-  },
+  getAll: ()               => API.get('/events'),
+  create: (data: FormData) => API.post('/events', data),
+  rsvp:   (id: number)     => API.post(`/events/${id}/rsvp`),
 };
 
 export const adminAPI = {
-  getPending:     ()                         => API.get('/admin/pending'),
-  getAllMembers:   ()                         => API.get('/admin/all-members'),
-  getAdmins:      ()                         => API.get('/admin/admins'),
-  approve:        (id: number)               => API.put(`/admin/approve/${id}`),
-  reject:         (id: number)               => API.put(`/admin/reject/${id}`),
-  deleteUser:     (id: number)               => API.delete(`/admin/delete/${id}`),
-  addAdmin:       (data: FormData)           => API.post('/admin/add-admin',  data),
-  addMember:      (data: FormData)           => API.post('/admin/add-member', data),
-  getBursaryApps: ()                         => API.get('/admin/bursary-applications'),
+  getPending:     ()                        => API.get('/admin/pending'),
+  getAllMembers:   ()                        => API.get('/admin/all-members'),
+  getAdmins:      ()                        => API.get('/admin/admins'),
+  approve:        (id: number)              => API.put(`/admin/approve/${id}`),
+  reject:         (id: number)              => API.put(`/admin/reject/${id}`),
+  deleteUser:     (id: number)              => API.delete(`/admin/delete/${id}`),
+  addAdmin:       (data: FormData)          => API.post('/admin/add-admin',  data),
+  addMember:      (data: FormData)          => API.post('/admin/add-member', data),
+  getBursaryApps: ()                        => API.get('/admin/bursary-applications'),
   updateBursary:  (id: number, status: string, notes: string) =>
     API.put(`/admin/bursary/${id}?status=${status}&admin_notes=${notes}`),
   getStats: () => API.get('/admin/stats'),

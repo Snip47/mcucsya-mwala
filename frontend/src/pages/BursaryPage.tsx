@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { BookOpen, Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 const BursaryPage: React.FC = () => {
-  const { user, isMPOrAdmin }                       = useAuth();
+  const { user, isMP, isAdmin }                     = useAuth();
   const [announcements, setAnnouncements]           = useState<BursaryAnnouncement[]>([]);
   const [myApplications, setMyApplications]         = useState<BursaryApplication[]>([]);
   const [tab, setTab]                               = useState<'announcements' | 'apply' | 'my'>('announcements');
