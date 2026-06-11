@@ -32,19 +32,22 @@ const AppContent: React.FC = () => {
     return <LoginPage onRegister={role => { setRegRole(role); setShowLogin(false); }} />;
   }
 
-  const renderPage = () => {
-    if (page === 'admin'   && isAdmin) return <AdminPage setPage={setPage} />;
-    if (page === 'profile')            return <ProfilePage setPage={setPage} />;
+ const renderPage = () => {
+  if (page === 'admin'   && isAdmin) return <AdminPage setPage={setPage} />;
+  if (page === 'profile')            return <ProfilePage setPage={setPage} />;
 
-    if (user.role === 'mp') {
-      return <MPDashboard page={page} />;
-    }
-    if (user.role === 'leader') {
-      return <LeaderDashboard page={page} />;
-    }
-    return <MemberDashboard page={page} />;
-  };
-
+  if (user.role === 'admin') {
+    // Admin sees leader dashboard for all non-admin pages
+    return <LeaderDashboard page={page} />;
+  }
+  if (user.role === 'mp') {
+    return <MPDashboard page={page} />;
+  }
+  if (user.role === 'leader') {
+    return <LeaderDashboard page={page} />;
+  }
+  return <MemberDashboard page={page} />;
+};
  const getNavTabs = () => {
   if (user.role === 'leader') {
     return [

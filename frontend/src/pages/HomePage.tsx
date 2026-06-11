@@ -23,19 +23,18 @@ const LEADER_POST_TYPES = [
 const MP_POST_TYPES = [
   { value: 'bursary',        label: 'Bursary Update' },
   { value: 'announcement',   label: 'Announcement' },
-  { value: 'county_program', label: 'County Program' },
+  { value: 'development program', label: 'Development Program' },
   { value: 'opportunity',    label: 'Opportunity' },
 ];
 
 const HomePage: React.FC = () => {
-  const { user, isLeaderOrAbove } = useAuth();
+  const { user, isLeaderOrAbove, isMPOrAdmin } = useAuth();
   const [posts,      setPosts]      = useState<Post[]>([]);
   const [filter,     setFilter]     = useState('');
   const [loading,    setLoading]    = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating,   setCreating]   = useState(false);
   const [error,      setError]      = useState('');
-
   const [newPost, setNewPost] = useState({
     title:     '',
     content:   '',

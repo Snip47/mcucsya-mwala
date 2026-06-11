@@ -160,12 +160,14 @@ def login(
     if not user or not verify_password(password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid ID or password")
 
-    if role == "admin" and user.role != "admin":
+    # Admin can login as admin or leader
+    if user.role == "admin":
+        if role not in ["admin", "leader"]:
+            raise HTTPException(status_code=403,
+                detail="Admin account. Please select Admin or Leader to login.")
+    elif role == "admin":
         raise HTTPException(status_code=403, detail="You are not authorized as admin.")
-    if role == "leader" and user.role not in ["leader", "admin"]:
-        raise HTTPException(status_code=403,
-            detail=f"This account is registered as '{user.role}'. Please select the correct role.")
-    if role not in ["admin", "leader"] and user.role != role:
+    elif user.role != role:
         raise HTTPException(status_code=403,
             detail=f"This account is registered as '{user.role}'. Please select '{user.role}' to login.")
 

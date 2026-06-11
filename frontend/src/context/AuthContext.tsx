@@ -11,6 +11,7 @@ interface AuthContextType {
   login:       (national_id: string, password: string, role: string) => Promise<void>;
   logout:      () => void;
   updatePhoto: (url: string) => void;
+  refreshUser: () => Promise<void>;
   isAdmin:     boolean;
   isMP:        boolean;
   isLeader:    boolean;
@@ -27,10 +28,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const t = localStorage.getItem('token');
     const u = localStorage.getItem('user');
-    if (t && u) { setToken(t); setUser(JSON.parse(u)); }
+    if (t && u) {
+      setToken(t);
+      setUser(JSON.parse(u));
+    }
     setLoading(false);
   }, []);
 
+  // Auto-kick if deleted/rejected
   useEffect(() => {
     if (!token) return;
     const interval = setInterval(async () => {
@@ -58,7 +63,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    setToken(null); setUser(null);
+    setToken(null);
+    setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   };
@@ -70,12 +76,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('user', JSON.stringify(updated));
   };
 
+  const refreshUser = async () => {
+    if (!token) return;
+    try {
+      const res    = await axios.get(`${getBaseUrl()}/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const fresh = res.data;
+      setUser(fresh);
+      localStorage.setItem('user', JSON.stringify(fresh));
+    } catch {}
+  };
+
   return (
     <AuthContext.Provider value={{
-      user, token, loading, login, logout, updatePhoto,
+      user, token, loading, login, logout, updatePhoto, refreshUser,
       isAdmin:  user?.role === 'admin',
       isMP:     user?.role === 'mp',
-      isLeader: user?.role === 'leader',
+      isLeader: user?.role === 'leader' || user?.role === 'admin',
       isMember: user?.role === 'member',
     }}>
       {children}
