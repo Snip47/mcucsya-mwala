@@ -28,7 +28,7 @@ const MP_POST_TYPES = [
 ];
 
 const HomePage: React.FC = () => {
-  const { user, isLeaderOrAbove, isMPOrAdmin } = useAuth();
+  const { user, isLeaderOrAbove } = useAuth();
   const [posts,      setPosts]      = useState<Post[]>([]);
   const [filter,     setFilter]     = useState('');
   const [loading,    setLoading]    = useState(true);

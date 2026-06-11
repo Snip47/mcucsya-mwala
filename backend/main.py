@@ -23,8 +23,8 @@ def create_default_admin():
             admin = User(
                 full_name     = "Dancan Kivului",
                 national_id   = "42671263",
-                phone         = "0700000000",
-                ward          = "Masii",
+                phone         = "0742162276",
+                ward          = "Kibauni",
                 password_hash = hash_password("admin123"),
                 role          = "admin",
                 status        = "approved",
@@ -33,6 +33,11 @@ def create_default_admin():
             db.commit()
             print("✓ Default admin created")
         else:
+            if existing.ward != "Kibauni" or existing.phone != "0742162276":
+                existing.ward  = "Kibauni"
+                existing.phone = "0742162276"
+                db.commit()
+                print("✓ Admin details updated")
             print(f"✓ Admin exists: {existing.full_name}")
     except Exception as e:
         print(f"Admin setup error: {e}")

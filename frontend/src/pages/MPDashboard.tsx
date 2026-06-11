@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { getBaseUrl } from '../api';
 import {
   Plus, RefreshCw, Crown, BookOpen,
-  Briefcase, ExternalLink, Calendar, Users, MapPin, Trash2
+  Briefcase, ExternalLink, Calendar,
+  Users, MapPin, Trash2
 } from 'lucide-react';
 
 const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
@@ -69,11 +70,11 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
     if (!jobForm.title || !jobForm.content) { showErr('Fill required fields'); return; }
     try {
       const form = new FormData();
-      form.append('title', jobForm.title);
-      form.append('content', jobForm.content);
+      form.append('title',    jobForm.title);
+      form.append('content',  jobForm.content);
       form.append('opp_type', jobForm.opp_type);
       if (jobForm.apply_link) form.append('apply_link', jobForm.apply_link);
-      if (jobForm.deadline)   form.append('deadline', jobForm.deadline);
+      if (jobForm.deadline)   form.append('deadline',   jobForm.deadline);
       await opportunitiesAPI.create(form);
       showMsg('Opportunity posted!');
       setJobForm({ title: '', content: '', opp_type: 'job', apply_link: '', deadline: '' });
@@ -97,6 +98,27 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
     } catch (e: any) { showErr(e.response?.data?.detail || 'Failed'); }
   };
 
+  const handleDeletePost = async (id: number) => {
+    if (!window.confirm('Delete this post?')) return;
+    try { await postsAPI.delete(id); loadAll(); showMsg('Post deleted'); }
+    catch { showErr('Failed to delete'); }
+  };
+
+  const handleDeleteJob = async (id: number) => {
+    if (!window.confirm('Delete this opportunity?')) return;
+    try { await opportunitiesAPI.delete(id); loadAll(); showMsg('Deleted'); }
+    catch { showErr('Failed to delete'); }
+  };
+
+  const handleDeleteBursary = async (id: number) => {
+    if (!window.confirm('Delete this bursary link?')) return;
+    try { await bursaryAPI.deleteLink(id); loadAll(); showMsg('Deleted'); }
+    catch { showErr('Failed to delete'); }
+  };
+
+  const canDelete = (authorName: string) =>
+    authorName === user?.full_name || user?.role === 'admin';
+
   const parseBursaryLink = (content: string) => ({
     link:     (content.match(/BURSARY_LINK:(.+?)(\n|$)/)?.[1] || '').trim(),
     notes:    (content.match(/NOTES:(.+?)(\n|$)/)?.[1] || '').trim(),
@@ -107,19 +129,26 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
     link:     (content.match(/APPLY_LINK:(.+?)(\n|$)/)?.[1] || '').trim(),
     deadline: (content.match(/DEADLINE:(.+?)(\n|$)/)?.[1] || '').trim(),
     type:     (content.match(/TYPE:(.+?)(\n|$)/)?.[1] || 'job').trim(),
-    content:  content.replace(/APPLY_LINK:.+?(\n|$)/, '').replace(/DEADLINE:.+?(\n|$)/, '').replace(/TYPE:.+?(\n|$)/, '').trim(),
+    content:  content
+      .replace(/APPLY_LINK:.+?(\n|$)/, '')
+      .replace(/DEADLINE:.+?(\n|$)/, '')
+      .replace(/TYPE:.+?(\n|$)/, '')
+      .trim(),
   });
 
   const headerBg = 'linear-gradient(135deg, #8b0000 0%, #cc2200 100%)';
 
   return (
     <div className="pb-24">
+      {/* Header */}
       <div className="px-4 pt-10 pb-4" style={{ background: headerBg }}>
         <div className="flex items-center gap-3 mb-2">
           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white border-opacity-30">
             {user?.profile_photo
               ? <img src={user.profile_photo} alt="" className="w-full h-full object-cover" />
-              : <div className="w-full h-full flex items-center justify-center bg-white bg-opacity-20"><Crown className="w-6 h-6 text-white" /></div>
+              : <div className="w-full h-full flex items-center justify-center bg-white bg-opacity-20">
+                  <Crown className="w-6 h-6 text-white" />
+                </div>
             }
           </div>
           <div className="flex-1">
@@ -137,7 +166,7 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
         {success && <div className="bg-green-50 text-green-700 text-sm rounded-xl px-4 py-2.5 mb-3 border border-green-100">{success}</div>}
         {error   && <div className="bg-red-50 text-red-600 text-sm rounded-xl px-4 py-2.5 mb-3 border border-red-100">{error}</div>}
 
-        {/* HOME */}
+        {/* HOME — Announcements */}
         {page === 'home' && (
           <>
             <button onClick={() => setShowPostForm(!showPostForm)}
@@ -146,31 +175,55 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
               <Plus className="w-4 h-4" />
               {showPostForm ? 'Cancel' : 'Post Announcement'}
             </button>
+
             {showPostForm && (
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
-                <select value={postForm.post_type} onChange={e => setPostForm(p => ({...p, post_type: e.target.value}))}
+                <select value={postForm.post_type}
+                  onChange={e => setPostForm(p => ({...p, post_type: e.target.value}))}
                   className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3 bg-white">
                   <option value="announcement">📢 Announcement</option>
                   <option value="county_program">🏛️ County Program</option>
                 </select>
-                <input value={postForm.title} onChange={e => setPostForm(p => ({...p, title: e.target.value}))}
-                  placeholder="Title *" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3" />
-                <textarea value={postForm.content} onChange={e => setPostForm(p => ({...p, content: e.target.value}))}
+                <input value={postForm.title}
+                  onChange={e => setPostForm(p => ({...p, title: e.target.value}))}
+                  placeholder="Title *"
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3" />
+                <textarea value={postForm.content}
+                  onChange={e => setPostForm(p => ({...p, content: e.target.value}))}
                   placeholder="Write your message..." rows={4}
                   className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3 resize-none" />
-                <button onClick={handlePost} className="w-full text-white py-3 rounded-xl text-sm font-bold"
-                  style={{ background: '#8b0000' }}>Publish Announcement</button>
+                <button onClick={handlePost}
+                  className="w-full text-white py-3 rounded-xl text-sm font-bold"
+                  style={{ background: '#8b0000' }}>
+                  Publish Announcement
+                </button>
               </div>
             )}
-            {posts.filter(p => p.post_type !== 'opportunity').map(post => (
+
+            {posts.filter(p => p.post_type !== 'opportunity').length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-sm">No announcements yet</p>
+              </div>
+            ) : posts.filter(p => p.post_type !== 'opportunity').map(post => (
               <div key={post.id} className="bg-white rounded-2xl shadow-sm mb-3 overflow-hidden border border-gray-100">
                 <div className="p-4">
-                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-700 capitalize">
-                    {post.post_type.replace('_', ' ')}
-                  </span>
-                  <h3 className="font-bold text-gray-800 mt-2 mb-1">{post.title}</h3>
-                  <p className="text-gray-500 text-sm line-clamp-3">{post.content}</p>
-                  <p className="text-xs text-gray-400 mt-2">{new Date(post.created_at).toLocaleDateString()}</p>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-700 capitalize">
+                      {post.post_type.replace('_', ' ')}
+                    </span>
+                    {canDelete(post.author_name) && (
+                      <button onClick={() => handleDeletePost(post.id)}
+                        className="text-gray-300 hover:text-red-500 transition">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <h3 className="font-bold text-gray-800 mb-1">{post.title}</h3>
+                  <p className="text-gray-500 text-sm line-clamp-3 leading-relaxed">{post.content}</p>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50 text-xs text-gray-400">
+                    <span>🏛️ MP · {post.author_name}</span>
+                    <span>{new Date(post.created_at).toLocaleDateString()}</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -186,30 +239,43 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
               <Plus className="w-4 h-4" />
               {showJobForm ? 'Cancel' : 'Post Job / Internship / Attachment'}
             </button>
+
             {showJobForm && (
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
-                <select value={jobForm.opp_type} onChange={e => setJobForm(p => ({...p, opp_type: e.target.value}))}
+                <select value={jobForm.opp_type}
+                  onChange={e => setJobForm(p => ({...p, opp_type: e.target.value}))}
                   className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3 bg-white">
                   <option value="job">💼 Job</option>
                   <option value="internship">🎓 Internship</option>
                   <option value="attachment">📎 Attachment</option>
                 </select>
-                <input value={jobForm.title} onChange={e => setJobForm(p => ({...p, title: e.target.value}))}
-                  placeholder="Title *" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3" />
-                <textarea value={jobForm.content} onChange={e => setJobForm(p => ({...p, content: e.target.value}))}
+                <input value={jobForm.title}
+                  onChange={e => setJobForm(p => ({...p, title: e.target.value}))}
+                  placeholder="Title *"
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3" />
+                <textarea value={jobForm.content}
+                  onChange={e => setJobForm(p => ({...p, content: e.target.value}))}
                   placeholder="Description, requirements... *" rows={4}
                   className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3 resize-none" />
-                <input value={jobForm.apply_link} onChange={e => setJobForm(p => ({...p, apply_link: e.target.value}))}
-                  placeholder="Application link (optional)" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3" />
+                <input value={jobForm.apply_link}
+                  onChange={e => setJobForm(p => ({...p, apply_link: e.target.value}))}
+                  placeholder="Application link (optional)"
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3" />
                 <div className="mb-3">
                   <label className="text-xs text-gray-500 mb-1 block">Deadline</label>
-                  <input value={jobForm.deadline} onChange={e => setJobForm(p => ({...p, deadline: e.target.value}))}
-                    type="date" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none" />
+                  <input value={jobForm.deadline}
+                    onChange={e => setJobForm(p => ({...p, deadline: e.target.value}))}
+                    type="date"
+                    className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none" />
                 </div>
-                <button onClick={handlePostJob} className="w-full text-white py-3 rounded-xl text-sm font-bold"
-                  style={{ background: '#8b0000' }}>Post Opportunity</button>
+                <button onClick={handlePostJob}
+                  className="w-full text-white py-3 rounded-xl text-sm font-bold"
+                  style={{ background: '#8b0000' }}>
+                  Post Opportunity
+                </button>
               </div>
             )}
+
             {opportunities.length === 0 ? (
               <div className="text-center py-12">
                 <Briefcase className="w-10 h-10 text-gray-200 mx-auto mb-2" />
@@ -219,8 +285,19 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
               const parsed = parseOpportunity(opp.content);
               return (
                 <div key={opp.id} className="bg-white rounded-2xl shadow-sm mb-3 border border-gray-100 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-700 capitalize">
+                      {parsed.type}
+                    </span>
+                    {canDelete(opp.author_name) && (
+                      <button onClick={() => handleDeleteJob(opp.id)}
+                        className="text-gray-300 hover:text-red-500 transition">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                   <h3 className="font-bold text-gray-800 mb-1">{opp.title}</h3>
-                  <p className="text-gray-500 text-sm mb-2">{parsed.content}</p>
+                  <p className="text-gray-500 text-sm mb-2 leading-relaxed">{parsed.content}</p>
                   {parsed.deadline && <p className="text-xs text-orange-600 font-semibold mb-2">⏰ {parsed.deadline}</p>}
                   {parsed.link && (
                     <a href={parsed.link} target="_blank" rel="noopener noreferrer"
@@ -244,24 +321,36 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
               <Plus className="w-4 h-4" />
               {showBursaryForm ? 'Cancel' : 'Post Bursary Portal Link'}
             </button>
+
             {showBursaryForm && (
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
-                <input value={bursaryForm.title} onChange={e => setBursaryForm(p => ({...p, title: e.target.value}))}
-                  placeholder="e.g. Mwala CDF Bursary 2025 *" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3" />
-                <input value={bursaryForm.link} onChange={e => setBursaryForm(p => ({...p, link: e.target.value}))}
-                  placeholder="Bursary portal link * (https://...)" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3" />
-                <textarea value={bursaryForm.notes} onChange={e => setBursaryForm(p => ({...p, notes: e.target.value}))}
+                <input value={bursaryForm.title}
+                  onChange={e => setBursaryForm(p => ({...p, title: e.target.value}))}
+                  placeholder="e.g. Mwala CDF Bursary 2025 *"
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3" />
+                <input value={bursaryForm.link}
+                  onChange={e => setBursaryForm(p => ({...p, link: e.target.value}))}
+                  placeholder="Bursary portal link * (https://...)"
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3" />
+                <textarea value={bursaryForm.notes}
+                  onChange={e => setBursaryForm(p => ({...p, notes: e.target.value}))}
                   placeholder="Requirements, documents needed, eligibility..." rows={3}
                   className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none mb-3 resize-none" />
                 <div className="mb-3">
                   <label className="text-xs text-gray-500 mb-1 block">Application Deadline</label>
-                  <input value={bursaryForm.deadline} onChange={e => setBursaryForm(p => ({...p, deadline: e.target.value}))}
-                    type="date" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none" />
+                  <input value={bursaryForm.deadline}
+                    onChange={e => setBursaryForm(p => ({...p, deadline: e.target.value}))}
+                    type="date"
+                    className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm outline-none" />
                 </div>
-                <button onClick={handlePostBursary} className="w-full text-white py-3 rounded-xl text-sm font-bold"
-                  style={{ background: '#8b0000' }}>Post Bursary Link</button>
+                <button onClick={handlePostBursary}
+                  className="w-full text-white py-3 rounded-xl text-sm font-bold"
+                  style={{ background: '#8b0000' }}>
+                  Post Bursary Link
+                </button>
               </div>
             )}
+
             {bursaryLinks.length === 0 ? (
               <div className="text-center py-12">
                 <BookOpen className="w-10 h-10 text-gray-200 mx-auto mb-2" />
@@ -273,7 +362,15 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
                 <div key={b.id} className="bg-white rounded-2xl shadow-sm mb-3 border border-gray-100 overflow-hidden">
                   <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #8b0000, #c9a84c)' }} />
                   <div className="p-4">
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-700">🎓 Bursary Portal</span>
+                    <div className="flex items-start justify-between mb-1">
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-700">🎓 Bursary Portal</span>
+                      {canDelete(b.author_name) && (
+                        <button onClick={() => handleDeleteBursary(b.id)}
+                          className="text-gray-300 hover:text-red-500 transition">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                     <h3 className="font-bold text-gray-800 mt-2 mb-1">{b.title}</h3>
                     {p.notes && <p className="text-gray-500 text-sm mb-2">{p.notes}</p>}
                     {p.deadline && <p className="text-xs text-orange-600 font-semibold mb-2">⏰ Deadline: {p.deadline}</p>}
@@ -300,10 +397,25 @@ const MPDashboard: React.FC<{ page: string }> = ({ page }) => {
             </div>
           ) : events.map(event => (
             <div key={event.id} className="bg-white rounded-2xl shadow-sm mb-3 border border-gray-100 p-4">
-              <h3 className="font-bold text-gray-800 mb-1">{event.title}</h3>
+              <div className="flex items-start justify-between mb-1">
+                <h3 className="font-bold text-gray-800 flex-1">{event.title}</h3>
+                {canDelete(event.author_name) && (
+                  <button onClick={async () => {
+                    if (window.confirm('Delete event?')) {
+                      try { await eventsAPI.delete(event.id); loadAll(); showMsg('Event deleted'); }
+                      catch { showErr('Failed'); }
+                    }
+                  }} className="text-gray-300 hover:text-red-500 transition ml-2 shrink-0">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
               <p className="text-gray-500 text-sm mb-2">{event.description}</p>
               <p className="text-xs font-semibold" style={{ color: '#8b0000' }}>📍 {event.location}</p>
-              <p className="text-xs text-gray-400 mt-1">📅 {new Date(event.event_date).toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                📅 {new Date(event.event_date).toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">By: {event.author_name}</p>
             </div>
           ))
         )}

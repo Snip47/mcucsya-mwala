@@ -4,10 +4,10 @@ import { authAPI } from '../api';
 import { User, MapPin, Phone, Building, LogOut, Shield, Camera, Crown, Users } from 'lucide-react';
 
 const ROLE_INFO: Record<string, { label: string; color: string; icon: any }> = {
-  member:  { label: 'Member',               color: '#1a3a6a', icon: User   },
-  leader:  { label: 'Chapter Leader',       color: '#2d1b69', icon: Users  },
-  mp:      { label: 'Member of Parliament', color: '#8b0000', icon: Crown  },
-  admin:   { label: 'Administrator',        color: '#1a1a1a', icon: Shield },
+  member:  { label: 'Comrade / Youth',       color: '#1a3a6a', icon: User   },
+  leader:  { label: 'Chapter Leader',        color: '#2d1b69', icon: Users  },
+  mp:      { label: 'Member of Parliament',  color: '#8b0000', icon: Crown  },
+  admin:   { label: 'Administrator',         color: '#1a1a1a', icon: Shield },
 };
 
 const ProfilePage: React.FC<{ setPage: (p: string) => void }> = ({ setPage }) => {
@@ -29,18 +29,18 @@ const ProfilePage: React.FC<{ setPage: (p: string) => void }> = ({ setPage }) =>
     const localUrl = URL.createObjectURL(file);
     setPreviewUrl(localUrl);
     setUploading(true);
-    setUploadMsg('');
+    setUploadMsg('Uploading...');
 
     try {
-      const res = await authAPI.updatePhoto(file, token!);
+      const res    = await authAPI.updatePhoto(file, token!);
       const newUrl = res.data.photo_url;
       updatePhoto(newUrl);
       setPreviewUrl(newUrl);
-      setUploadMsg('Photo updated successfully!');
+      setUploadMsg('✓ Photo updated successfully!');
       setTimeout(() => setUploadMsg(''), 3000);
     } catch (err) {
-      setUploadMsg('Failed to upload. Please try again.');
-      setPreviewUrl(null);
+      setUploadMsg('✗ Failed to upload. Please try again.');
+      setPreviewUrl(user?.profile_photo || null);
       setTimeout(() => setUploadMsg(''), 3000);
     } finally {
       setUploading(false);
@@ -70,23 +70,26 @@ const ProfilePage: React.FC<{ setPage: (p: string) => void }> = ({ setPage }) =>
 
           {uploadMsg && (
             <div className={`text-sm rounded-xl px-4 py-2.5 mb-4 text-center font-medium ${
-              uploadMsg.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+              uploadMsg.includes('✓') ? 'bg-green-50 text-green-700' : 
+              uploadMsg.includes('✗') ? 'bg-red-50 text-red-600' :
+              'bg-blue-50 text-blue-600'
             }`}>
               {uploadMsg}
             </div>
           )}
 
           <div className="flex items-start gap-4 mb-4">
-            {/* Profile photo with upload */}
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full overflow-hidden border-4"
-                style={{ borderColor: info.color + '50' }}>
+            {/* Profile photo */}
+            <div className="relative shrink-0">
+              <div className="w-20 h-20 rounded-full overflow-hidden"
+                style={{ border: `4px solid ${info.color}50` }}>
                 {currentPhoto ? (
                   <img
                     src={currentPhoto}
                     alt={user.full_name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
+                      (e.target as HTMLImageElement).src = '';
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
@@ -98,11 +101,10 @@ const ProfilePage: React.FC<{ setPage: (p: string) => void }> = ({ setPage }) =>
                 )}
               </div>
 
-              {/* Camera button */}
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="absolute bottom-0 right-0 w-7 h-7 rounded-full text-white flex items-center justify-center shadow-md border-2 border-white"
+                className="absolute bottom-0 right-0 w-7 h-7 rounded-full text-white flex items-center justify-center shadow-lg border-2 border-white"
                 style={{ background: info.color }}
               >
                 {uploading ? (
@@ -120,10 +122,10 @@ const ProfilePage: React.FC<{ setPage: (p: string) => void }> = ({ setPage }) =>
               />
             </div>
 
-            <div className="flex-1">
-              <h2 className="font-bold text-gray-800 text-lg leading-tight">{user.full_name}</h2>
-              <div className="flex items-center gap-1.5 mt-1">
-                <RoleIcon className="w-3.5 h-3.5" style={{ color: info.color }} />
+            <div className="flex-1 min-w-0">
+              <h2 className="font-bold text-gray-800 text-lg leading-tight truncate">{user.full_name}</h2>
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                <RoleIcon className="w-3.5 h-3.5 shrink-0" style={{ color: info.color }} />
                 <span className="text-xs font-medium px-2 py-0.5 rounded-full text-white"
                   style={{ background: info.color }}>
                   {info.label}
@@ -132,9 +134,14 @@ const ProfilePage: React.FC<{ setPage: (p: string) => void }> = ({ setPage }) =>
               {user.position && (
                 <p className="text-xs text-gray-500 mt-1">{user.position}</p>
               )}
-              <p className="text-xs text-gray-400 mt-1">
-                Tap camera icon to change photo
-              </p>
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="mt-2 text-xs font-medium flex items-center gap-1"
+                style={{ color: info.color }}>
+                <Camera className="w-3 h-3" />
+                {uploading ? 'Uploading...' : 'Change photo'}
+              </button>
             </div>
           </div>
 

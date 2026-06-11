@@ -5,7 +5,7 @@ import { Eye, EyeOff, Shield, Users, Crown, User } from 'lucide-react';
 type RoleType = 'member' | 'leader' | 'mp' | 'admin';
 
 const ROLES = [
-  { id: 'member' as RoleType, label: 'Member',  icon: User,   color: '#1a3a6a', desc: 'Student member'       },
+  { id: 'member' as RoleType, label: 'Member',  icon: User,   color: '#1a3a6a', desc: 'Youth/comrade'       },
   { id: 'leader' as RoleType, label: 'Leader',  icon: Users,  color: '#2d1b69', desc: 'Chapter leader'       },
   { id: 'mp'     as RoleType, label: 'MP',       icon: Crown,  color: '#8b0000', desc: 'Member of Parliament' },
   { id: 'admin'  as RoleType, label: 'Admin',    icon: Shield, color: '#1a1a1a', desc: 'System admin'         },

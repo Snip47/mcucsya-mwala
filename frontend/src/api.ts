@@ -101,19 +101,22 @@ export const postsAPI = {
 export const opportunitiesAPI = {
   getAll:  ()               => API.get('/opportunities'),
   create:  (data: FormData) => API.post('/opportunities', data),
-};
-
-export const bursaryAPI = {
-  getLinks:  ()               => API.get('/bursary/links'),
-  postLink:  (data: FormData) => API.post('/bursary/link',  data),
-  apply:     (data: FormData) => API.post('/bursary/apply', data),
-  getMyApps: ()               => API.get('/bursary/my-applications'),
+  delete:  (id: number)     => API.delete(`/opportunities/${id}`),
 };
 
 export const eventsAPI = {
-  getAll: ()               => API.get('/events'),
-  create: (data: FormData) => API.post('/events', data),
-  rsvp:   (id: number)     => API.post(`/events/${id}/rsvp`),
+  getAll:  ()               => API.get('/events'),
+  create:  (data: FormData) => API.post('/events', data),
+  rsvp:    (id: number)     => API.post(`/events/${id}/rsvp`),
+  delete:  (id: number)     => API.delete(`/events/${id}`),
+};
+
+export const bursaryAPI = {
+  getLinks:      ()               => API.get('/bursary/links'),
+  postLink:      (data: FormData) => API.post('/bursary/link',  data),
+  deleteLink:    (id: number)     => API.delete(`/bursary/links/${id}`),
+  apply:         (data: FormData) => API.post('/bursary/apply', data),
+  getMyApps:     ()               => API.get('/bursary/my-applications'),
 };
 
 export const adminAPI = {

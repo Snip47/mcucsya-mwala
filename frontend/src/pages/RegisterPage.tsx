@@ -83,7 +83,7 @@ const RegisterPage: React.FC<{ role: string; onBack: () => void }> = ({ role, on
   };
 
   const roleColor = role === 'leader' ? '#2d1b69' : role === 'mp' ? '#8b0000' : '#1a3a6a';
-  const roleLabel = role === 'leader' ? 'Chapter Leader' : role === 'mp' ? 'MP' : 'Member';
+ const roleLabel = role === 'leader' ? 'Chapter Leader' : role === 'mp' ? 'MP' : 'Comrade / Youth';
 
   if (success) {
     return (

@@ -67,6 +67,30 @@ async def register_leader(
 ):
     existing = db.query(User).filter(User.national_id == national_id).first()
     if existing:
+        if existing.role == "admin":
+            existing.position = position
+            existing.ward     = ward
+            existing.phone    = phone
+            existing.role     = "admin"
+            db.commit()
+            token = create_access_token({"sub": str(existing.id), "role": existing.role})
+            return {
+                "message":      "Leader profile updated for admin account.",
+                "status":       "approved",
+                "access_token": token,
+                "user": {
+                    "id":            existing.id,
+                    "full_name":     existing.full_name,
+                    "national_id":   existing.national_id,
+                    "role":          existing.role,
+                    "status":        existing.status,
+                    "ward":          existing.ward,
+                    "position":      existing.position,
+                    "profile_photo": existing.profile_photo,
+                    "institution":   existing.institution,
+                    "phone":         existing.phone,
+                }
+            }
         raise HTTPException(status_code=400, detail="An account with this ID already exists.")
     if len(national_id) < 6 or len(national_id) > 9:
         raise HTTPException(status_code=400, detail="Please enter a valid ID number (6-9 digits)")
@@ -135,11 +159,16 @@ def login(
     user = db.query(User).filter(User.national_id == national_id).first()
     if not user or not verify_password(password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid ID or password")
+
     if role == "admin" and user.role != "admin":
         raise HTTPException(status_code=403, detail="You are not authorized as admin.")
-    if user.role != role:
+    if role == "leader" and user.role not in ["leader", "admin"]:
+        raise HTTPException(status_code=403,
+            detail=f"This account is registered as '{user.role}'. Please select the correct role.")
+    if role not in ["admin", "leader"] and user.role != role:
         raise HTTPException(status_code=403,
             detail=f"This account is registered as '{user.role}'. Please select '{user.role}' to login.")
+
     if user.status == "pending":
         raise HTTPException(status_code=403, detail="Your account is pending admin approval.")
     if user.status == "rejected":

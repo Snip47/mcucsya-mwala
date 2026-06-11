@@ -70,7 +70,6 @@ async def create_post(
     db.commit()
     db.refresh(post)
     return post
-
 @router.delete("/posts/{post_id}")
 def delete_post(post_id: int, db: Session = Depends(get_db), authorization: str = Header(...)):
     user = get_current_user(authorization, db)
@@ -261,3 +260,38 @@ def get_leaders(db: Session = Depends(get_db), authorization: str = Header(...))
 @router.get("/profile")
 def get_profile(db: Session = Depends(get_db), authorization: str = Header(...)):
     return get_current_user(authorization, db)
+@router.delete("/events/{event_id}")
+def delete_event(event_id: int, db: Session = Depends(get_db), authorization: str = Header(...)):
+    user  = get_current_user(authorization, db)
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if event.author_id != user.id and user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    db.delete(event)
+    db.commit()
+    return {"message": "Event deleted"}
+
+@router.delete("/opportunities/{post_id}")
+def delete_opportunity(post_id: int, db: Session = Depends(get_db), authorization: str = Header(...)):
+    user = get_current_user(authorization, db)
+    post = db.query(Post).filter(Post.id == post_id, Post.post_type == "opportunity").first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Not found")
+    if post.author_id != user.id and user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    db.delete(post)
+    db.commit()
+    return {"message": "Deleted"}
+
+@router.delete("/bursary/links/{ann_id}")
+def delete_bursary_link(ann_id: int, db: Session = Depends(get_db), authorization: str = Header(...)):
+    user = get_current_user(authorization, db)
+    if user.role not in ["mp", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    ann = db.query(BursaryAnnouncement).filter(BursaryAnnouncement.id == ann_id).first()
+    if not ann:
+        raise HTTPException(status_code=404, detail="Not found")
+    db.delete(ann)
+    db.commit()
+    return {"message": "Deleted"}
